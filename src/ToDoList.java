@@ -198,7 +198,7 @@ public class ToDoList implements Serializable {
                 if (subTask != null) {
                     subTask.setDescription(changeDes(subTask.getDescription()));
                     subTask.setCompleted(true);
-                    inputHandler.println("Подзадача №" + subTask.getId() + " успешно выполнена! Переходите к следующей задачи!");
+                    inputHandler.println("Подзадача №" + subTask.getId() + " успешно выполнена! Переходите к следующей задачи пр!");
                     boolean allSubTasksCompleted = true;
                     for (SimpleTask taskInList : megaTask.getSubTasks()) {
                         if (!taskInList.isCompleted()) {
