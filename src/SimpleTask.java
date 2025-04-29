@@ -1,16 +1,19 @@
 import java.io.*;
 
-public class SimpleTask implements Task {
+public class SimpleTask implements Task, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private String description;
     private Status status;
-    private final InputHandler inputHandler;
+    private transient InputHandler inputHandler;
     private static  int idCounter = 0;
     private final int id;
     private boolean completed;
 
 
-    // конструктор который создаёт обычную задачу
-    public SimpleTask(Status status, InputHandler inputHandler) throws IOException {
+    // конструктор, который создаёт обычную задачу
+    public SimpleTask(Status status, InputHandler inputHandler) {
         this.description = getValidDescription(inputHandler);
         this.status = status;
         this.inputHandler = inputHandler;
@@ -25,6 +28,11 @@ public class SimpleTask implements Task {
         this.status = status;
         this.inputHandler = null;
         this.id = ++idCounter;
+    }
+
+    private Object readResolve() {
+        this.inputHandler = InputHandler.getInstance();
+        return this;
     }
 
     public void setCompleted(boolean completed) {
@@ -63,11 +71,11 @@ public class SimpleTask implements Task {
         return id;
     }
 
-    // проверка на валидность вводимых данных. Строка не может быть пустой
+    // Проверка на валидность вводимых данных. Строка не может быть пустой
     public String getValidDescription(InputHandler inputHandler) {
         String validDes = "";
         while (validDes.isEmpty()) {
-            inputHandler.println("Введите вашу задучу: ");
+            inputHandler.println("Введите вашу задачу: ");
             validDes = inputHandler.readLine();
             if (validDes != null && !validDes.isEmpty()) {
                 return validDes;
@@ -80,6 +88,6 @@ public class SimpleTask implements Task {
 
     @Override
     public String toString() {
-        return "SimpleTask { description: " + description + ", status: " + status + ", id: " + id + "}";
+        return "SimpleTask { description: " + description + ", status: " + status + "}";
     }
 }

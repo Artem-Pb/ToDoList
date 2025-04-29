@@ -6,12 +6,12 @@ public class InputHandler {
     private final BufferedReader reader;
     private static InputHandler instance;
 
-    private InputHandler()  {
+    private InputHandler() {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
     }
 
 
-    public static InputHandler getInstance() {
+    public static synchronized InputHandler getInstance() {
         if (instance == null) {
             instance = new InputHandler();
         }

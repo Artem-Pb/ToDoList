@@ -1,3 +1,4 @@
+import java.io.Externalizable;
 import java.util.Collections;
 import java.util.List;
 
@@ -6,7 +7,7 @@ public interface Task {
     Status getStatus();
     void setStatus(Status status);
     int getId();
-    default InputHandler getInstance() {
+    default InputHandler  getInstance() {
         return InputHandler.getInstance();
     }
     default List<SimpleTask> getSubTasks() {

@@ -1,16 +1,26 @@
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.*;
 
-public class ToDoList {
-    private Map<Integer, Task> questions;
-    private final InputHandler inputHandler;
+public class ToDoList implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final Map<Integer, Task> questions;
+    private transient InputHandler inputHandler;
 
     public ToDoList(InputHandler inputHandler) {
         this.questions = new HashMap<>();
         this.inputHandler = inputHandler;
     }
 
+    private Object readResolve() {
+        this.inputHandler = InputHandler.getInstance();
+        return this;
+    }
+
     // Добавление задачи в список
-    public void addTask(Task task, int id) {
+    public void addTask(int id, Task task) {
         questions.put(id, task);
     }
 
@@ -53,7 +63,7 @@ public class ToDoList {
                             megaTask.updateSubTask(answerForCase, new SimpleTask(newSubTusk, megaTask.getSubTasks().get(answerForCase).getStatus()));
                             inputHandler.println("Подзадача изменина!");
                         } else {
-                            inputHandler.println("Подзадача не иожет быть пустой!");
+                            inputHandler.println("Подзадача не может быть пустой!");
                         }
                     } else {
                         inputHandler.println("Неверный номер подзадачи!");
@@ -104,7 +114,7 @@ public class ToDoList {
                     inputHandler.println("Выход из режима редактирования!");
                     return;
                 default:
-                    inputHandler.println("Невырный выбор. Попробуйте снова!");
+                    inputHandler.println("Неверный выбор. Попробуйте снова!");
                     break;
             }
         }
@@ -134,6 +144,14 @@ public class ToDoList {
         return questions;
     }
 
+    public Task getQuestion(int id) {
+        if (!questions.containsKey(id)) {
+            inputHandler.println("Задачи с таким номером не существует!");
+            return null;
+        }
+        return questions.get(id);
+    }
+
     public void printAllQuestions() {
         if (questions.isEmpty()) {
             inputHandler.println("Список задач пуст!");
@@ -141,7 +159,19 @@ public class ToDoList {
             questions.forEach((id, task) -> inputHandler.println("ID: " + id + " Task: " + task));
         }
     }
-
+    public ToDoList delToDo (ToDoList list) {
+        inputHandler.println("Вы точно хотите очисть список дел и начать с чистого листа??? ");
+        String answer = inputHandler.readLine();
+        if (!answer.isEmpty() && (answer.equalsIgnoreCase("да") || answer.equalsIgnoreCase("yes"))) {
+            var map = list.getQuestions();
+            map.clear();
+            list = new ToDoList(inputHandler);
+            inputHandler.println("Я создал новый лист, теперь можно работать дальше!");
+        } else {
+            inputHandler.println("Список остался прежним, можете продолжать работать!");
+        }
+        return list;
+    }
 
     public boolean removeTaskById(int id) {
         return questions.remove(id) != null;
@@ -155,27 +185,46 @@ public class ToDoList {
         return stringBuilder.toString();
     }
 
-    public void changeStatus(int id) {
-        Task task = questions.get(id);
-        if (task instanceof SimpleTask) {
-            SimpleTask simpleTask = (SimpleTask) task;
+    public void changeStatus(int taskId, Integer subTaskId) {
+        Task task = questions.get(taskId);
+
+        if (task instanceof SimpleTask simpleTask) {
             simpleTask.setDescription((changeDes(simpleTask.getDescription())));
             simpleTask.setCompleted(true);
-        } else if (task instanceof MegaTask) {
-            MegaTask megaTask = (MegaTask) task;
-            boolean allSubTasksCompleted = true;
-            for (SimpleTask subTasks : megaTask.getSubTasks()) {
-                if (!subTasks.isCompleted()) {
-                    subTasks.setDescription(changeDes(subTasks.getDescription()));
-                    subTasks.setCompleted(true);
+            inputHandler.println("Вы завершили исполнение задачи №" + simpleTask.getId());
+        } else if (task instanceof MegaTask megaTask) {
+            if (subTaskId != null) {
+                SimpleTask subTask = megaTask.getSubTask(subTaskId);
+                if (subTask != null) {
+                    subTask.setDescription(changeDes(subTask.getDescription()));
+                    subTask.setCompleted(true);
+                    inputHandler.println("Подзадача №" + subTask.getId() + " успешно выполнена! Переходите к следующей задачи!");
+                    boolean allSubTasksCompleted = true;
+                    for (SimpleTask taskInList : megaTask.getSubTasks()) {
+                        if (!taskInList.isCompleted()) {
+                            allSubTasksCompleted = false;
+                            break;
+                        }
+                    }
+                if (allSubTasksCompleted) {
+                   megaTask.setTitle(changeDes(megaTask.getTitle()));
+                   megaTask.setCompleted(true);
+                } else {
+                    inputHandler.println("Подзадачи с №" + subTask.getId() + " не найдена!");
                 }
-                if (!subTasks.isCompleted()) {
-                    allSubTasksCompleted = false;
+            } else {
+                    megaTask.setTitle(changeDes(megaTask.getTitle()));
+                    megaTask.setCompleted(true);
+                    inputHandler.println("Вы завершили исполнение мегазадачи №" + megaTask.getId());
                 }
             }
-            if (allSubTasksCompleted) {
-                megaTask.setTitle(changeDes(megaTask.getTitle()));
-                megaTask.setCompleted(true);
+        }
+    }
+
+    public void showCompleteTask() {
+        for (Map.Entry<Integer, Task> entry : questions.entrySet()) {
+            if (entry.getValue().getStatus().equals(Status.COMPLETED) && entry.getValue().getStatus() != null) {
+                inputHandler.println(entry.getValue().getDescription());
             }
         }
     }
